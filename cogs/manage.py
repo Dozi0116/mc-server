@@ -25,7 +25,10 @@ class Server(commands.Cog):
     async def server_open(self, ctx):
         await ctx.send('OK! インスタンスが立ち上がるまでしばらくお待ち下さい…\nサーバーの起動には5分程度かかるので、ゆっくり待っててください :tea:')
         await start(self.compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(20)
+        await asyncio.sleep(10)
+        # broken pipe bug
+        await start(self.compute, self.project, self.zone, self.instance) 
+        await asyncio.sleep(10)
         status = await get_status(self.compute, self.project, self.zone, self.instance)
         now_ip = status['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         await self.bot.change_presence(
@@ -48,6 +51,8 @@ class Server(commands.Cog):
     @mc.command(name='close')
     async def server_close(self, ctx):
         await ctx.send('OK! インスタンスが落ちてなさそうならもう1度実行してください。')
+        await stop(self.compute, self.project, self.zone, self.instance)
+        await asyncio.sleep(10)
         await stop(self.compute, self.project, self.zone, self.instance)
         await asyncio.sleep(10)
         await self.bot.change_presence(status=discord.Status.idle)
