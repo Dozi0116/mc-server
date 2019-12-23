@@ -8,7 +8,6 @@ import asyncio
 class Server(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.compute = discovery.build('compute', 'v1')
         self.prev_ip = None
 
         self.project = os.getenv('GCP_PROJECT')
@@ -23,13 +22,11 @@ class Server(commands.Cog):
 
     @mc.command(name='open')
     async def server_open(self, ctx):
+        compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが立ち上がるまでしばらくお待ち下さい…\nサーバーの起動には5分程度かかるので、ゆっくり待っててください :tea:')
-        await start(self.compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
-        # broken pipe bug
-        await start(self.compute, self.project, self.zone, self.instance) 
-        await asyncio.sleep(10)
-        status = await get_status(self.compute, self.project, self.zone, self.instance)
+        await start(compute, self.project, self.zone, self.instance)
+        await asyncio.sleep(20)
+        status = await get_status(compute, self.project, self.zone, self.instance)
         now_ip = status['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         await self.bot.change_presence(
             status = discord.Status.online,
@@ -50,16 +47,16 @@ class Server(commands.Cog):
 
     @mc.command(name='close')
     async def server_close(self, ctx):
+        compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが落ちてなさそうならもう1度実行してください。')
-        await stop(self.compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
-        await stop(self.compute, self.project, self.zone, self.instance)
+        await stop(compute, self.project, self.zone, self.instance)
         await asyncio.sleep(10)
         await self.bot.change_presence(status=discord.Status.idle)
 
     @mc.command(name='status')
     async def server_status(self, ctx):
-        res = await get_status(self.compute, self.project, self.zone, self.instance)
+        compute = discovery.build('compute', 'v1')
+        res = await get_status(compute, self.project, self.zone, self.instance)
         status = res['status']
 
         if status == 'RUNNING':
