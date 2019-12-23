@@ -15,7 +15,6 @@ INIT_EXT = [
     'cogs.debug'
 ]
 
-compute = discovery.build('compute', 'v1')
 
 class MC_Server(commands.Bot):
     def __init__(self, command_prefix):

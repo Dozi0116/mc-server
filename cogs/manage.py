@@ -61,10 +61,21 @@ class Server(commands.Cog):
 
         if status == 'RUNNING':
             await ctx.send('インスタンスは立ち上がっています！つながらない場合はサーバーの起動中です。　もうしばらくお待ち下さい…')
+            await self.bot.change_presence(
+            status = discord.Status.online,
+            activity = discord.Activity(
+                name = 'MC server on {}'.format(self.prev_ip),
+                type = discord.ActivityType.playing,
+                state = 'hello',
+                details = 'on ' + self.prev_ip
+            )
+        )
         elif status == 'TERMINATED':
             await ctx.send('インスタンスは停止しています。openしてminecraftで遊びましょう！')
+            await self.bot.change_presence(status=discord.Status.idle)
         elif status == 'STOPPING':
             await ctx.send('インスタンスは停止中です。　安心して寝てください！')
+            await self.bot.change_presence(status=discord.Status.idle)
         else:
             await ctx.send('管理者が把握していない状態 {} です。　しばらくしてからもう1度お試しください。'.format(status))
 
