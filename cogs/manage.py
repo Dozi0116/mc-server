@@ -18,7 +18,7 @@ class Server(commands.Cog):
     @commands.group(name='mc')
     async def mc(self, ctx):
         if ctx.invoked_subcommand is None:
-            await ctx.send('使い方: !mc [open|close]')
+                await ctx.send('使い方: /mc [open|close|status]')
 
     @mc.command(name='open')
     async def server_open(self, ctx):
