@@ -22,13 +22,16 @@ class Server(commands.Cog):
 
     @mc.command(name='open')
     async def server_open(self, ctx):
+        print('[log] type open command')
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが立ち上がるまでしばらくお待ち下さい…\nサーバーの起動には5分程度かかるので、ゆっくり待っててください :tea:')
         await start(compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
+        print('[log] complete first request')
+        await asyncio.sleep(15)
         await ctx.send('アクセスポイント問い合わせ中… もうしばらくお待ち下さい。')
         await start(compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
+        print('[log] complete second request')
+        await asyncio.sleep(15)
         status = await get_status(compute, self.project, self.zone, self.instance)
         now_ip = status['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         await self.bot.change_presence(
@@ -40,6 +43,7 @@ class Server(commands.Cog):
                 details = 'on ' + now_ip
             )
         )
+        print('[log] get instance status')
 
         if now_ip == self.prev_ip:
             await ctx.send('前回と同じIPなので、このまま遊べます！')
@@ -47,18 +51,24 @@ class Server(commands.Cog):
             await ctx.send('新しいアクセスポイントは{}です。'.format(now_ip))
 
         self.prev_ip = now_ip
+        print('[log] end open command')
 
     @mc.command(name='close')
     async def server_close(self, ctx):
+        print('[log] type close command')
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが落ちてなさそうならもう1度実行してください。')
         await stop(compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
+        print('[log] end first request')
+        await asyncio.sleep(15)
         await stop(compute, self.project, self.zone, self.instance)
+        print('[log] end second request')
         await self.bot.change_presence(status=discord.Status.idle)
+        print('[log] end close command')
 
     @mc.command(name='status')
     async def server_status(self, ctx):
+        print('[log] type status command')
         compute = discovery.build('compute', 'v1')
         res = await get_status(compute, self.project, self.zone, self.instance)
         status = res['status']
@@ -82,6 +92,8 @@ class Server(commands.Cog):
             await self.bot.change_presence(status=discord.Status.idle)
         else:
             await ctx.send('管理者が把握していない状態 {} です。　しばらくしてからもう1度お試しください。'.format(status))
+            print('[WARN] unknown instance status {}'.format(status))
+
 
 def setup(bot):
     bot.add_cog(Server(bot)) #cogの登録
