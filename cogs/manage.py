@@ -25,7 +25,10 @@ class Server(commands.Cog):
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが立ち上がるまでしばらくお待ち下さい…\nサーバーの起動には5分程度かかるので、ゆっくり待っててください :tea:')
         await start(compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(20)
+        await asyncio.sleep(10)
+        await ctx.send('アクセスポイント問い合わせ中… もうしばらくお待ち下さい。')
+        await start(compute, self.project, self.zone, self.instance)
+        await asyncio.sleep(10)
         status = await get_status(compute, self.project, self.zone, self.instance)
         now_ip = status['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         await self.bot.change_presence(
@@ -51,6 +54,7 @@ class Server(commands.Cog):
         await ctx.send('OK! インスタンスが落ちてなさそうならもう1度実行してください。')
         await stop(compute, self.project, self.zone, self.instance)
         await asyncio.sleep(10)
+        await stop(compute, self.project, self.zone, self.instance)
         await self.bot.change_presence(status=discord.Status.idle)
 
     @mc.command(name='status')
