@@ -22,6 +22,7 @@ class Server(commands.Cog):
 
     @mc.command(name='open')
     async def server_open(self, ctx):
+        print('[log] type open command')
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが立ち上がるまでしばらくお待ち下さい…\nサーバーの起動には5分程度かかるので、ゆっくり待っててください :tea:')
         await start(compute, self.project, self.zone, self.instance)
@@ -37,6 +38,7 @@ class Server(commands.Cog):
                 details = 'on ' + now_ip
             )
         )
+        print('[log] get instance status')
 
         if now_ip == self.prev_ip:
             await ctx.send('前回と同じIPなので、このまま遊べます！')
@@ -44,17 +46,20 @@ class Server(commands.Cog):
             await ctx.send('新しいアクセスポイントは{}です。'.format(now_ip))
 
         self.prev_ip = now_ip
+        print('[log] end open command')
 
     @mc.command(name='close')
     async def server_close(self, ctx):
+        print('[log] type close command')
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが落ちてなさそうならもう1度実行してください。')
         await stop(compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
         await self.bot.change_presence(status=discord.Status.idle)
+        print('[log] end close command')
 
     @mc.command(name='status')
     async def server_status(self, ctx):
+        print('[log] type status command')
         compute = discovery.build('compute', 'v1')
         res = await get_status(compute, self.project, self.zone, self.instance)
         status = res['status']
@@ -78,7 +83,7 @@ class Server(commands.Cog):
         elif status == 'STOPPING':
             await self.bot.change_presence(status=discord.Status.idle)
         else:
-            await ctx.send('管理者が把握していない状態です。 管理者にメンションでも飛ばしてください。')
+            print('[WARN] unknown instance status {}'.format(status))
 
 def setup(bot):
     bot.add_cog(Server(bot)) #cogの登録
