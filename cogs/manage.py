@@ -25,10 +25,7 @@ class Server(commands.Cog):
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが立ち上がるまでしばらくお待ち下さい…\nサーバーの起動には5分程度かかるので、ゆっくり待っててください :tea:')
         await start(compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
-        await ctx.send('アクセスポイント問い合わせ中… もうしばらくお待ち下さい。')
-        await start(compute, self.project, self.zone, self.instance)
-        await asyncio.sleep(10)
+        await asyncio.sleep(15)
         status = await get_status(compute, self.project, self.zone, self.instance)
         now_ip = status['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         await self.bot.change_presence(
@@ -54,7 +51,6 @@ class Server(commands.Cog):
         await ctx.send('OK! インスタンスが落ちてなさそうならもう1度実行してください。')
         await stop(compute, self.project, self.zone, self.instance)
         await asyncio.sleep(10)
-        await stop(compute, self.project, self.zone, self.instance)
         await self.bot.change_presence(status=discord.Status.idle)
 
     @mc.command(name='status')
@@ -63,25 +59,26 @@ class Server(commands.Cog):
         res = await get_status(compute, self.project, self.zone, self.instance)
         status = res['status']
 
+        await ctx.send('Status: {}'.format(status))
+
         if status == 'RUNNING':
-            await ctx.send('インスタンスは立ち上がっています！つながらない場合はサーバーの起動中です。　もうしばらくお待ち下さい…')
+            self.prev_ip = res['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+            await ctx.send('IP address: {}'.format(self.prev_ip))
             await self.bot.change_presence(
-            status = discord.Status.online,
-            activity = discord.Activity(
-                name = 'MC server on {}'.format(self.prev_ip),
-                type = discord.ActivityType.playing,
-                state = 'hello',
-                details = 'on ' + self.prev_ip
+                status = discord.Status.online,
+                activity = discord.Activity(
+                    name = 'MC server on {}'.format(self.prev_ip),
+                    type = discord.ActivityType.playing,
+                    state = 'hello',
+                    details = 'on ' + self.prev_ip
+                )
             )
-        )
         elif status == 'TERMINATED':
-            await ctx.send('インスタンスは停止しています。openしてminecraftで遊びましょう！')
             await self.bot.change_presence(status=discord.Status.idle)
         elif status == 'STOPPING':
-            await ctx.send('インスタンスは停止中です。　安心して寝てください！')
             await self.bot.change_presence(status=discord.Status.idle)
         else:
-            await ctx.send('管理者が把握していない状態 {} です。　しばらくしてからもう1度お試しください。'.format(status))
+            await ctx.send('管理者が把握していない状態です。 管理者にメンションでも飛ばしてください。')
 
 def setup(bot):
     bot.add_cog(Server(bot)) #cogの登録
