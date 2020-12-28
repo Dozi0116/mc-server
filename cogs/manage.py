@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 from googleapiclient import discovery
 
+from .lib import minestat
+
 import os
 import asyncio
 
@@ -63,8 +65,8 @@ class Server(commands.Cog):
         compute = discovery.build('compute', 'v1')
         res = await get_status(compute, self.project, self.zone, self.instance)
         status = res['status']
-
-        await ctx.send('Status: {}'.format(status))
+        
+        await ctx.send('## Instance Info ##\nStatus: {}'.format(status))
 
         if status == 'RUNNING':
             self.prev_ip = res['networkInterfaces'][0]['accessConfigs'][0]['natIP']
@@ -78,6 +80,9 @@ class Server(commands.Cog):
                     details = 'on ' + self.prev_ip
                 )
             )
+            ms = minestat.MineStat(self.prev_ip, 25565)
+            online_str = 'online' if ms.online else 'offline'
+            await ctx.send('## Minecraft Info ##\nStatus: {}'.format(online_str))
         elif status == 'TERMINATED':
             await self.bot.change_presence(status=discord.Status.idle)
         elif status == 'STOPPING':
