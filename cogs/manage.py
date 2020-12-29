@@ -83,6 +83,8 @@ class Server(commands.Cog):
             ms = minestat.MineStat(self.prev_ip, 25565)
             online_str = 'online' if ms.online else 'offline'
             await ctx.send('## Minecraft Info ##\nStatus: {}'.format(online_str))
+            if ms.online:
+                await ctx.send('now {} player(s) in a game!'.format(ms.current_players))
         elif status == 'TERMINATED':
             await self.bot.change_presence(status=discord.Status.idle)
         elif status == 'STOPPING':
