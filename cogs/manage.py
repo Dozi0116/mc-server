@@ -14,7 +14,7 @@ class Server(commands.Cog):
 
         self.project = os.getenv('GCP_PROJECT')
         self.zone = os.getenv('GCE_ZONE')
-        self.instance = os.getenv('GCE_INSTANCE')
+        # self.instance = os.getenv('GCE_INSTANCE')
         self.master = os.getenv('MASTER_ID')
 
     @commands.group(name='mc')
@@ -23,13 +23,13 @@ class Server(commands.Cog):
                 await ctx.send('使い方: /mc [open|close|status]')
 
     @mc.command(name='open')
-    async def server_open(self, ctx):
+    async def server_open(self, ctx, arg=''):
         print('[log] type open command')
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが立ち上がるまでしばらくお待ち下さい…\nサーバーの起動には5分程度かかるので、ゆっくり待っててください :tea:')
-        await start(compute, self.project, self.zone, self.instance)
+        await start(compute, self.project, self.zone, inflate_instance_name(arg))
         await asyncio.sleep(15)
-        status = await get_status(compute, self.project, self.zone, self.instance)
+        status = await get_status(compute, self.project, self.zone, inflate_instance_name(arg))
         now_ip = status['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         await self.bot.change_presence(
             status = discord.Status.online,
@@ -51,19 +51,19 @@ class Server(commands.Cog):
         print('[log] end open command')
 
     @mc.command(name='close')
-    async def server_close(self, ctx):
+    async def server_close(self, ctx, arg=''):
         print('[log] type close command')
         compute = discovery.build('compute', 'v1')
         await ctx.send('OK! インスタンスが落ちてなさそうならもう1度実行してください。')
-        await stop(compute, self.project, self.zone, self.instance)
+        await stop(compute, self.project, self.zone, inflate_instance_name(arg))
         await self.bot.change_presence(status=discord.Status.idle)
         print('[log] end close command')
 
     @mc.command(name='status')
-    async def server_status(self, ctx):
+    async def server_status(self, ctx, arg=''):
         print('[log] type status command')
         compute = discovery.build('compute', 'v1')
-        res = await get_status(compute, self.project, self.zone, self.instance)
+        res = await get_status(compute, self.project, self.zone, inflate_instance_name(arg))
         status = res['status']
         
         await ctx.send('## Instance Info ##\nStatus: {}'.format(status))
@@ -95,6 +95,11 @@ class Server(commands.Cog):
 def setup(bot):
     bot.add_cog(Server(bot)) #cogの登録
 
+def inflate_instance_name(name):
+    if name == '':
+        return 'minecraft-server'
+    else:
+        return 'minecraft-' + name + '-server'
 
 async def start(c, p, z, i):
     c.instances().start(project = p, zone = z, instance = i).execute()
