@@ -1,2 +1,3 @@
 run-bot.sh
 cogs/debug.py
+cogs/__pycache__/*
